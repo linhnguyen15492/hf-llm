@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "bm25s>=0.3.9",
     "datasets>=4.8.4",
     "evaluate>=0.4.6",
     "gitsource>=0.0.5",

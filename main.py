@@ -1,25 +1,46 @@
-from transformers import pipeline
-from transformers import AutoTokenizer, AutoModel
+import joblib
+import numpy as np
+from bm25s.utils import corpus
 from sentence_transformers import SentenceTransformer
-import os
+
+from retrieval.retriever import BM25Retriever, SemanticRetriever
 from src.prompts.prompt_templates import house_info_layout
 from sklearn.datasets import fetch_20newsgroups
 import pandas as pd
 from src.llm.llm_client import generate_with_single_input
+from src.utils.utils import read_dataframe, pprint, cosine_similarity, reciprocal_rank_fusion
 
-custom_path = "models/"
+MODEL_PATH = "models/"
+EMBEDDINGS = joblib.load("data/embeddings.joblib")
+NEWS_DATA = read_dataframe("data/news_data_dedup.csv")
+pprint(NEWS_DATA[5])
+CORPUS = [x['title'] + " " + x['description'] for x in NEWS_DATA]
 
-# tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-base-en-v1.5")
-# model = AutoModel.from_pretrained("BAAI/bge-base-en-v1.5", cache_dir=custom_path)
 
-model = SentenceTransformer("BAAI/bge-base-en-v1.5", cache_folder=custom_path)
+def query_news(indices):
+    """
+    Retrieves elements from a dataset based on specified indices.
 
-res = model.encode("RAG is awesome")
-print(res.shape)
+    Parameters:
+    indices (list of int): A list containing the indices of the desired elements in the dataset.
+    dataset (list or sequence): The dataset from which elements are to be retrieved. It should support indexing.
+
+    Returns:
+    list: A list of elements from the dataset corresponding to the indices provided in list_of_indices.
+    """
+
+    output = [NEWS_DATA[index] for index in indices]
+
+    return output
 
 
 def main():
     print("Hello from hf-llm!")
+
+    # tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-base-en-v1.5")
+    # model = AutoModel.from_pretrained("BAAI/bge-base-en-v1.5", cache_dir=MODEL_PATH)
+    embedder = SentenceTransformer("BAAI/bge-base-en-v1.5", cache_folder=MODEL_PATH)
+
     # generator = pipeline("text-generation", model="HuggingFaceTB/SmolLM2-360M")
     # generator(
     #     "In this course, we will teach you how to",
@@ -54,32 +75,75 @@ def main():
         },
     ]
 
-    layout = house_info_layout(house_data)
-    print(layout)
-
-    # Load the 20 Newsgroups dataset
-    newsgroups_train: Any = fetch_20newsgroups(
-        subset="train", shuffle=True, random_state=42, data_home="./data"
-    )
-
-    print("Number of documents in the training set:", len(newsgroups_train))
+    # layout = house_info_layout(house_data)
+    # print(layout)
+    #
+    # # Load the 20 Newsgroups dataset
+    # newsgroups_train: Any = fetch_20newsgroups(
+    #     subset="train", shuffle=True, random_state=42, data_home="./data"
+    # )
+    #
+    # print("Number of documents in the training set:", len(newsgroups_train))
 
     # Convert the dataset to a DataFrame for easier handling
-    df = pd.DataFrame(
-        {"text": newsgroups_train.data, "category": newsgroups_train.target}
-    )
+    # df = pd.DataFrame(
+    #     {"text": newsgroups_train.data, "category": newsgroups_train.target}
+    # )
+    #
+    # # Display some basic information about the dataset
+    # print(df.head())
+    # print("\nDataset Size:", df.shape)
+    # print("\nNumber of Categories:", len(newsgroups_train.target_names))
+    # print("\nCategories:", newsgroups_train.target_names)
 
-    # Display some basic information about the dataset
-    print(df.head())
-    print("\nDataset Size:", df.shape)
-    print("\nNumber of Categories:", len(newsgroups_train.target_names))
-    print("\nCategories:", newsgroups_train.target_names)
+    # generated_text = generate_with_single_input(
+    #     prompt="Write a short story about a robot learning to love.",
+    #     role="user",
+    # )
+    # print(generated_text)
 
-    generated_text = generate_with_single_input(
-        prompt="Write a short story about a robot learning to love.",
-        role="user",
-    )
-    print(generated_text)
+    bm25_retriever = BM25Retriever(CORPUS)
+    bm25_indices = bm25_retriever.retrieve("What are the recent news about GDP?")
+    print(bm25_indices)
+
+    # Example usage
+    query = "RAG is awesome"
+    # Using, but truncating the result to not pollute the output, don't truncate it in the exercise.
+    print(embedder.encode(query)[:40])
+
+    query1 = "What are the primary colors"
+    query2 = "Yellow, red and blue"
+    query3 = "Cats are friendly animals"
+
+    query1_embed = embedder.encode(query1)
+    query2_embed = embedder.encode(query2)
+    query3_embed = embedder.encode(query3)
+
+    print(f"Similarity between '{query1}' and '{query2}' = {cosine_similarity(query1_embed, query2_embed)[0]}")
+    print(f"Similarity between '{query1}' and '{query3}' = {cosine_similarity(query1_embed, query3_embed)[0]}")
+
+    query = "Taylor Swift"
+    query_embed = embedder.encode(query)
+    # The result is a matrix with one matrix per sample. Since there is only one sample (the query), it is a matrix with one matrix within.
+    # This is why you need to get the first element
+    similarity_scores = cosine_similarity(query_embed, EMBEDDINGS)
+    similarity_indices = np.argsort(
+        -similarity_scores)  # Sort on decreasing order (sort the negative on increasing order), but return the indices
+    # Top 2 indices
+    top_2_indices = similarity_indices[:2]
+    print(top_2_indices)
+
+    # Retrieving the data
+    print(query_news(top_2_indices))
+
+    semantic_retriever = SemanticRetriever(embedder, EMBEDDINGS)
+    semantic_indices = semantic_retriever.retrieve("What are the recent news about GDP?")
+    print(semantic_indices)
+
+    rrf_list = reciprocal_rank_fusion(semantic_indices, bm25_indices)
+    print(f"Semantic Search List: {semantic_indices}")
+    print(f"BM25 List: {bm25_indices}")
+    print(f"RRF List: {rrf_list}")
 
 
 if __name__ == "__main__":

@@ -2,7 +2,6 @@ import requests
 import json
 import os
 from typing import List, Dict
-from together import Together
 
 
 def get_proxy_url():
@@ -39,16 +38,15 @@ def get_api_key(key_name: str):
 
 
 def generate_with_single_input(
-    prompt: str,
-    role: str = "user",
-    top_p: float = None,
-    temperature: float = None,
-    max_tokens: int = 500,
-    model: str = "Qwen/Qwen3.5-9B",
-    together_api_key=None,
-    **kwargs,
+        prompt: str,
+        role: str = "user",
+        top_p: float = None,
+        temperature: float = None,
+        max_tokens: int = 500,
+        model: str = "Qwen/Qwen3.5-9B",
+        together_api_key=None,
+        **kwargs,
 ):
-
     # Remove None parameters for Together API - don't set to string 'none'
     if top_p is None:
         payload_top_p = None
@@ -104,13 +102,13 @@ def generate_with_single_input(
 
 
 def generate_with_multiple_input(
-    messages: List[Dict],
-    top_p: float = None,
-    temperature: float = None,
-    max_tokens: int = 500,
-    model: str = "Qwen/Qwen3.5-9B",
-    together_api_key=None,
-    **kwargs,
+        messages: List[Dict],
+        top_p: float = None,
+        temperature: float = None,
+        max_tokens: int = 500,
+        model: str = "Qwen/Qwen3.5-9B",
+        together_api_key=None,
+        **kwargs,
 ):
     # Remove None parameters for Together API
     if top_p is None:
