@@ -2,6 +2,9 @@ import numpy as np
 import onnxruntime as ort
 from tokenizers import Tokenizer
 from pathlib import Path
+from openai import OpenAI
+import os
+from typing import List, Union
 
 
 class Embedder:
@@ -36,3 +39,43 @@ class Embedder:
         if normalize:
             pooled = pooled / np.linalg.norm(pooled, axis=1, keepdims=True)
         return pooled
+
+
+class APIEmbedder:
+    def __init__(self, api_url: str = None, api_key: str = None, model_name: str = None):
+        """
+        Khởi tạo Embedder kết nối qua API.
+        :param api_url: Đường dẫn Endpoint của API (Ví dụ: http://192.168.1.x:8000/v1/embeddings)
+        :param api_key: Mã bảo mật API nếu Server yêu cầu xác thực
+        :param model_name: Tên mô hình đang cấu hình trên Server API
+        """
+        self.api_url = api_url or os.environ.get("OPENAI_URL")
+        self.model_name = model_name or os.environ.get("EMBEDDING_MODEL")
+        self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
+        self.client = OpenAI(api_key=self.api_key, base_url=self.api_url)
+
+    def encode(self, texts: Union[str, List[str]], batch_size: int = 32) -> List[List[float]]:
+        """
+        Hàm mã hóa danh sách văn bản thành các Vector qua API.
+        Thiết kế gom cụm (Batching) để tối ưu đường truyền mạng và giảm tải cho Server API.
+        """
+        all_embeddings = []
+
+        # Chia nhỏ danh sách chuỗi văn bản thành từng cụm (Batch) trước khi gửi qua mạng
+        for i in range(0, len(texts), batch_size):
+            batch_texts = texts[i:i + batch_size]
+
+            try:
+                response = self.client.embeddings.create(
+                    input=batch_texts,
+                    model=self.model_name
+                )
+
+                embeddings = [data.embedding for data in response.data]
+                all_embeddings.extend(embeddings)
+
+            except Exception as e:
+                print(f"[API Embedder Network Error] Thất bại khi kết nối tới Server Embedding: {e}")
+                raise e
+
+        return all_embeddings

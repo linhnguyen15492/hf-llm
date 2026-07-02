@@ -13,6 +13,7 @@ ONNX_CANDIDATES = [
     "model.onnx",
 ]
 
+
 def download(repo, dest="models"):
     dest = Path(dest) / repo
     dest.mkdir(parents=True, exist_ok=True)
@@ -43,6 +44,7 @@ def download(repo, dest="models"):
             print(f"  saved {dst}")
         else:
             print(f"  exists {dst}")
+
 
 if __name__ == "__main__":
     download("Xenova/all-MiniLM-L6-v2")

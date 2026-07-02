@@ -31,6 +31,13 @@ def get_together_key():
     return os.environ.get("TOGETHER_API_KEY", "")
 
 
+def get_api_key(key_name: str):
+    """
+    Get the API key from environment variables.
+    """
+    return os.environ.get(key_name, "")
+
+
 def generate_with_single_input(
     prompt: str,
     role: str = "user",
