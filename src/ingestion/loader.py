@@ -1,7 +1,9 @@
 import requests
-from chromadb import EmbeddingFunction
-from models.document import FAQDocument
 import chromadb
+from tqdm import tqdm
+from config.settings import settings
+from embeddings.embedder import LocalEmbeddingFunction
+from models.document import FAQDocument
 
 
 def load_faq_data() -> list[FAQDocument]:
@@ -23,35 +25,48 @@ def load_faq_data() -> list[FAQDocument]:
     return documents
 
 
-def ingest_faq(documents: list[FAQDocument], collection_name: str, persistent_path: str,
-               embedding_function: EmbeddingFunction):
-    client = chromadb.PersistentClient(path=persistent_path)
-    collection = client.get_collection(collection_name)
+def ingest_data():
+    faq_documents = load_faq_data()
+    client = chromadb.PersistentClient(path=settings.chromadb_dir)
+
+    try:
+        collection = client.get_collection("faq_collection")
+    except Exception as e:
+        print(f"Could not connect to collection: {e}")
+        collection = None
+
     if collection:
-        print("collection exists")
+        print("Collection exists. Skipping ingestion.")
         return
 
-    print("collection does not exist")
-    print("collection created")
+    print("Collection does not exist. Ingesting data...")
+    embedding_function = LocalEmbeddingFunction(model_name=settings.local_embedding_model,
+                                                cache_folder=settings.local_embedding_model_cache_dir)
     collection = client.create_collection(
-        name=collection_name,
+        name="faq_collection",
         embedding_function=embedding_function
     )
 
     ids = []
     texts = []
     metadatas = []
-    for document in documents:
-        ids.append(document.id)
+    count = 0
+    for document in tqdm(faq_documents, desc="Processing documents"):
+        ids.append(str(document.id))
         texts.append(document.question + " " + document.answer)
         metadatas.append({
             "course": document.course,
             "section": document.section,
         })
+        count += 1
+    print("Retrieving embeddings...")
 
-    collection.add(
-        ids=ids,
-        documents=texts,
-        metadatas=metadatas
-    )
-    print("faq ingestion complete")
+    batch_size = 64
+    for i in tqdm(range(0, len(ids), batch_size), desc="Retrieving embeddings"):
+        collection.add(
+            ids=ids[i:i + batch_size],
+            documents=texts[i:i + batch_size],
+            metadatas=metadatas[i:i + batch_size],
+        )
+
+    print(f"faq ingestion complete. Total documents ingested: {count}")
