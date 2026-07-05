@@ -1,6 +1,7 @@
 from embeddings.embedder import APIEmbedder
 import os
 
+from llm.base_llm import BaseLLM
 from retrieval.retriever import QdrantRetriever
 from vectordb.vector_store import QdrantVectorStore
 
@@ -102,7 +103,7 @@ def main():
     retriever = QdrantRetriever(
         embedder=embedder,
         qdrant_url=os.environ.get("QDRANT_URL", "http://localhost:6333"),
-        collection_name="vietnam_law_corpus"
+        collection_name="vietnam_law_corpus",
     )
 
     documents = qdrant_client.process_and_chunk_law_json(path)
@@ -115,6 +116,27 @@ def main():
     print("Search Results:", result)
 
 
-if __name__ == "__main__":
-    # main()
-    pass
+class FAQRag:
+    def __init__(
+            self,
+            llm_client: BaseLLM,
+            retriever: QdrantRetriever,
+    ):
+        self.llm_client = llm_client
+        self.retriever = retriever
+
+    def ask(self, query):
+        search_results = self.retriever.retrieve(query, top_k=5)
+        context = "\n".join([doc["metadata"]["raw_text"] for doc in search_results])
+        prompt = PROMPT_TEMPLATE.format(question=query, context=context)
+
+        input_messages = [
+            {"role": "developer", "content": INSTRUCTIONS},
+            {"role": "user", "content": prompt},
+        ]
+
+        response = self.llm_client.responses.create(
+            model=self.llm_client.model_name, input=input_messages
+        )
+
+        return response.output_text

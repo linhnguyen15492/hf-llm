@@ -1,8 +1,10 @@
 import json
+import chromadb
+from chromadb import EmbeddingFunction
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
-
 from embeddings.embedder import APIEmbedder
+import os
 
 
 class QdrantVectorStore:
@@ -94,3 +96,14 @@ class QdrantVectorStore:
         # Push dữ liệu lên Qdrant theo từng cụm (upsert)
         self.client.upsert(collection_name=self.collection_name, points=points)
         print("Nạp dữ liệu hoàn tất thành công!")
+
+
+class ChromaVectorStore:
+    def __init__(self, persistent_path: str, embedder: EmbeddingFunction, collection_name: str):
+        self.client = chromadb.PersistentClient(path=persistent_path)
+
+        if not self.client.get_collection(collection_name):
+            self.collection = self.client.create_collection(
+                name=collection_name,
+                embedding_function=embedder
+            )

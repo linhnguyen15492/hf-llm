@@ -1,3 +1,5 @@
+from typing import List, Dict
+
 import requests
 import json
 import numpy as np
@@ -27,7 +29,9 @@ def reciprocal_rank_fusion(list1, list2, top_k=5, K=60):
     # Iterate over each document list
     for lst in [list1, list2]:
         # Calculate the RRF score for each document index
-        for rank, item in enumerate(lst, start=1):  # Start = 1 set the first element as 1 and not 0.
+        for rank, item in enumerate(
+                lst, start=1
+        ):  # Start = 1 set the first element as 1 and not 0.
             # This is a convention on how ranks work (the first element in ranking is denoted by 1 and not 0 as in lists)
             # If the item is not in the dictionary, initialize its score to 0
             if item not in rrf_scores:
@@ -105,7 +109,9 @@ def euclidean_distance(v1, array_of_vectors):
         v2 = np.array(v2)
         # Check if the input arrays have the same shape
         if v1.shape != v2.shape:
-            raise ValueError(f"Shapes don't match: v1 shape: {v1.shape}, v2 shape: {v2.shape}")
+            raise ValueError(
+                f"Shapes don't match: v1 shape: {v1.shape}, v2 shape: {v2.shape}"
+            )
         # Calculate the Euclidean distance and append to the list
         dist = np.sqrt(np.sum((v1 - v2) ** 2))
         distances.append(dist)
@@ -121,7 +127,7 @@ def format_date(date_string):
 
 
 def pprint(*args, **kwargs):
-    kwargs.setdefault('sort_dicts', False)
+    kwargs.setdefault("sort_dicts", False)
     original_pprint(*args, **kwargs)
 
 
@@ -145,9 +151,155 @@ def read_dataframe(path):
     df = pd.read_csv(path)
 
     # Apply the custom date formatting function to the relevant columns
-    df['published_at'] = df['published_at'].apply(format_date)
-    df['updated_at'] = df['updated_at'].apply(format_date)
+    df["published_at"] = df["published_at"].apply(format_date)
+    df["updated_at"] = df["updated_at"].apply(format_date)
 
     # Convert the DataFrame to dictionary after formatting
-    df = df.to_dict(orient='records')
+    df = df.to_dict(orient="records")
     return df
+
+
+def get_together_key():
+    """
+    Get the Together API key from environment variables.
+    """
+    return os.environ.get("TOGETHER_API_KEY", "")
+
+
+# def generate_with_single_input(
+#         prompt: str,
+#         role: str = "user",
+#         top_p: float = None,
+#         temperature: float = None,
+#         max_tokens: int = 500,
+#         model: str = "Qwen/Qwen3.5-9B",
+#         together_api_key=None,
+#         **kwargs,
+# ):
+#     # Remove None parameters for Together API - don't set to string 'none'
+#     if top_p is None:
+#         payload_top_p = None
+#     else:
+#         payload_top_p = top_p
+#     if temperature is None:
+#         payload_temperature = None
+#     else:
+#         payload_temperature = temperature
+#
+#     payload = {
+#         "model": model,
+#         "messages": [{"role": role, "content": prompt}],
+#         "max_tokens": max_tokens,
+#         "reasoning": {"enabled": False},
+#         **kwargs,
+#     }
+#     # Only add temperature and top_p if they're not None
+#     if payload_temperature is not None:
+#         payload["temperature"] = payload_temperature
+#     if payload_top_p is not None:
+#         payload["top_p"] = payload_top_p
+#
+#     if (not together_api_key) and ("TOGETHER_API_KEY" not in os.environ):
+#         url = os.path.join(get_proxy_url(), "v1/chat/completions")
+#         response = requests.post(url, json=payload, verify=False)
+#         if not response.ok:
+#             raise Exception(f"Error while calling LLM: {response.text}")
+#         try:
+#             json_dict = json.loads(response.text)
+#         except Exception as e:
+#             raise Exception(
+#                 f"Failed to get correct output from LLM call.\nException: {e}\nResponse: {response.text}"
+#             )
+#     else:
+#         if together_api_key is None:
+#             together_api_key = os.environ["TOGETHER_API_KEY"]
+#         client = Together(api_key=together_api_key)
+#         json_dict = client.chat.completions.create(**payload).model_dump()
+#         json_dict["choices"][-1]["message"]["role"] = json_dict["choices"][-1][
+#             "message"
+#         ]["role"].name.lower()
+#     try:
+#         output_dict = {
+#             "role": json_dict["choices"][-1]["message"]["role"],
+#             "content": json_dict["choices"][-1]["message"]["content"],
+#         }
+#     except Exception as e:
+#         raise Exception(
+#             f"Failed to get correct output dict. Please try again. Error: {e}"
+#         )
+#     return output_dict
+#
+#
+# def generate_with_multiple_input(
+#         messages: List[Dict],
+#         top_p: float = None,
+#         temperature: float = None,
+#         max_tokens: int = 500,
+#         model: str = "Qwen/Qwen3.5-9B",
+#         together_api_key=None,
+#         **kwargs,
+# ):
+#     # Remove None parameters for Together API
+#     if top_p is None:
+#         payload_top_p = None
+#     else:
+#         payload_top_p = top_p
+#     if temperature is None:
+#         payload_temperature = None
+#     else:
+#         payload_temperature = temperature
+#
+#     payload = {
+#         "model": model,
+#         "messages": messages,
+#         "max_tokens": max_tokens,
+#         "reasoning": {"enabled": False},
+#         **kwargs,
+#     }
+#     # Only add temperature and top_p if they're not None
+#     if payload_temperature is not None:
+#         payload["temperature"] = payload_temperature
+#     if payload_top_p is not None:
+#         payload["top_p"] = payload_top_p
+#
+#     if (not together_api_key) and ("TOGETHER_API_KEY" not in os.environ):
+#         url = os.path.join(get_proxy_url(), "v1/chat/completions")
+#         response = requests.post(url, json=payload, verify=False)
+#         if not response.ok:
+#             raise Exception(f"Error while calling LLM: {response.text}")
+#         try:
+#             json_dict = json.loads(response.text)
+#         except Exception as e:
+#             raise Exception(
+#                 f"Failed to get correct output from LLM call.\nException: {e}\nResponse: {response.text}"
+#             )
+#     else:
+#         if together_api_key is None:
+#             together_api_key = os.environ["TOGETHER_API_KEY"]
+#         client = Together(api_key=together_api_key)
+#         json_dict = client.chat.completions.create(**payload).model_dump()
+#         json_dict["choices"][-1]["message"]["role"] = json_dict["choices"][-1][
+#             "message"
+#         ]["role"].name.lower()
+#     try:
+#         output_dict = {
+#             "role": json_dict["choices"][-1]["message"]["role"],
+#             "content": json_dict["choices"][-1]["message"]["content"],
+#         }
+#     except Exception as e:
+#         raise Exception(
+#             f"Failed to get correct output dict. Please try again. Error: {e}"
+#         )
+#     return output_dict
+
+
+# def retrieve(model, query, top_k=5):
+#     query_embedding = model.encode(query)
+#
+#     similarity_scores = cosine_similarity(query_embedding.reshape(1, -1), EMBEDDINGS)[0]
+#
+#     similarity_indices = np.argsort(-similarity_scores)
+#
+#     top_k_indices = similarity_indices[:top_k]
+#
+#     return top_k_indices

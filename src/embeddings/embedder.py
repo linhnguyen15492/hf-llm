@@ -5,6 +5,10 @@ from pathlib import Path
 from openai import OpenAI
 import os
 from typing import List, Union
+from typing import Dict, Any
+from chromadb import Documents, EmbeddingFunction, Embeddings
+from chromadb.utils.embedding_functions import register_embedding_function
+from sentence_transformers import SentenceTransformer
 
 
 class Embedder:
@@ -79,3 +83,28 @@ class APIEmbedder:
                 raise e
 
         return all_embeddings
+
+
+@register_embedding_function
+class LocalEmbeddingFunction(EmbeddingFunction):
+
+    def __init__(self, model_name, model_path=None, *args: Any, **kwargs: Any):
+        if model_path:
+            self.model = SentenceTransformer(model_path)
+        else:
+            self.model = SentenceTransformer(model_name, cache_folder=model_path)
+
+    def __call__(self, input: Documents) -> Embeddings:
+        # embed the documents somehow
+        return self.model.encode(input).tolist()
+
+    @staticmethod
+    def name() -> str:
+        return "my-ef"
+
+    def get_config(self) -> Dict[str, Any]:
+        return dict(model=self.model)
+
+    @staticmethod
+    def build_from_config(config: Dict[str, Any]) -> "EmbeddingFunction":
+        return LocalEmbeddingFunction(config['model'])

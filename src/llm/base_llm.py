@@ -2,6 +2,16 @@ import requests
 import json
 import os
 from typing import List, Dict
+from abc import ABC, abstractmethod
+
+
+class BaseLLM(ABC):
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+
+    @abstractmethod
+    def generate_response(self, prompt: str, max_tokens: int = 150) -> str:
+        pass
 
 
 def get_proxy_url():

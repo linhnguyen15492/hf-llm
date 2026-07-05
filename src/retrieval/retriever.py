@@ -3,6 +3,26 @@ from qdrant_client import QdrantClient
 import bm25s
 import numpy as np
 from utils.utils import cosine_similarity
+from abc import ABC, abstractmethod
+
+
+class Retriever(ABC):
+    def __init__(self, embedder, similarity_func):
+        self.embedder = embedder
+        self.similarity_func = similarity_func
+
+    @abstractmethod
+    def retrieve(self, query, top_k=5):
+        pass
+
+
+class HybridRetriever(Retriever):
+    def retrieve(self, query, top_k=5):
+        pass
+
+    def __init__(self, embedder, similarity_func):
+        super().__init__(embedder, similarity_func)
+        self.embedder = embedder
 
 
 class QdrantRetriever:
