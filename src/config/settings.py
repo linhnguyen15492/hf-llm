@@ -7,15 +7,16 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=BASE_DIR / ".env",
-        env_file_encoding="utf-8",
-        extra="ignore"
+        env_file=BASE_DIR / ".env", env_file_encoding="utf-8", extra="ignore"
     )
 
     # LLM
     llm_provider: str = "ollama"
     llm_model: str = "qwen3:latest"
     openai_api_key: str | None = None
+    openai_llm_model: str | None = None
+    gemini_api_key: str | None = None
+    gemini_llm_model: str | None = None
     ollama_host: str = "http://localhost:11434"
 
     # Embedding

@@ -1,47 +1,49 @@
-from embeddings.embedder import APIEmbedder
+from embeddings.embedding import APIEmbedder
 from qdrant_client import QdrantClient
 import bm25s
 import numpy as np
 from utils.utils import cosine_similarity
 from abc import ABC, abstractmethod
+from typing import Any, List
+from vectordb.vector_store import VectorStore
 
 
 class Retriever(ABC):
-    def __init__(self, embedder, similarity_func):
-        self.embedder = embedder
-        self.similarity_func = similarity_func
+    def __init__(self, vectordb: VectorStore):
+        self.vector_store = vectordb
 
     @abstractmethod
-    def retrieve(self, query, top_k=5):
+    def retrieve(self, texts, top_k=5) -> list[Any] | None:
         pass
 
 
-class HybridRetriever(Retriever):
-    def retrieve(self, query, top_k=5):
-        pass
+class SimpleRetriever(Retriever):
+    def __init__(self, vectordb: VectorStore):
+        super().__init__(vectordb)
 
-    def __init__(self, embedder, similarity_func):
-        super().__init__(embedder, similarity_func)
-        self.embedder = embedder
+    def retrieve(self, texts, top_k=5) -> list[Any] | None:
+        results = self.vector_store.search(texts, top_k=top_k)
+
+        return results
 
 
 class QdrantRetriever:
     def __init__(
-            self,
-            embedder: APIEmbedder,
-            qdrant_url: str = "http://localhost:6333",
-            collection_name: str = "vietnam_law_corpus",
+        self,
+        embedder: APIEmbedder,
+        qdrant_url: str = "http://localhost:6333",
+        collection_name: str = "vietnam_law_corpus",
     ):
         self.qdrant = QdrantClient(qdrant_url)
         self.collection_name = collection_name
         self.embedder = embedder  # Tiêm module Embedder vào đây
 
-    def retrieve(self, query, top_k=5):
-        query_embedding = self.embedder.encode(query)[0]
+    def retrieve(self, texts, top_k=5) -> list[Any] | None:
+        query_embeddings = self.embedder.encode(texts)
 
         search_result = self.qdrant.query_points(
             collection_name=self.collection_name,
-            query=query_embedding,
+            query=query_embeddings,
             limit=top_k,
         )
 
@@ -55,10 +57,7 @@ class BM25Retriever:
         self.tokenized_data = bm25s.tokenize(corpus)
         self.retriever.index(self.tokenized_data)
 
-    def retrieve(
-            self,
-            query: str, top_k: int = 5
-    ):
+    def retrieve(self, query: str, top_k: int = 5) -> list[Any] | None:
         """
         Retrieves the top k relevant documents for a given query using the BM25 algorithm.
 
@@ -89,7 +88,9 @@ class BM25Retriever:
 
 
 class SemanticRetriever:
-    def __init__(self, embedder, embeddings, similarity_func: callable = cosine_similarity):
+    def __init__(
+        self, embedder, embeddings, similarity_func: callable = cosine_similarity
+    ):
         self.embedder = embedder
         self.embeddings = embeddings
         self.similarity_func = similarity_func

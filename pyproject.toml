@@ -10,6 +10,7 @@ dependencies = [
     "datasets>=4.8.4",
     "evaluate>=0.4.6",
     "gitsource>=0.0.5",
+    "google-genai>=2.10.0",
     "jupyter>=1.1.1",
     "langchain-text-splitters>=1.1.2",
     "matplotlib>=3.11.0",

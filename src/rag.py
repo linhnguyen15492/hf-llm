@@ -1,26 +1,21 @@
-from embeddings.embedder import APIEmbedder
+from embeddings.embedding import APIEmbedder
 import os
 
 from llm.base_llm import BaseLLM
-from retrieval.retriever import QdrantRetriever
+from retrieval.retriever import QdrantRetriever, Retriever
 from vectordb.vector_store import QdrantVectorStore
 
 from dotenv import load_dotenv
 
 INSTRUCTIONS = """
-Your task is to answer questions from the course participants
-based on the provided context.
+Your task is to answer questions from the course participants based on the provided context.
 
-Use the context to find relevant information and provide accurate
-answers. If the answer is not found in the context,
-respond with "I don't know."
+Use the context to find relevant information and provide accurate answers. If the answer is not found in the context, respond with "I don't know."
 """
 
 PROMPT_TEMPLATE = """
+CONTEXT: {context}
 QUESTION: {question}
-
-CONTEXT:
-{context}
 """.strip()
 
 load_dotenv()
@@ -120,23 +115,32 @@ class FAQRag:
     def __init__(
         self,
         llm_client: BaseLLM,
-        retriever: QdrantRetriever,
+        retriever: Retriever,
+        instructions: str = INSTRUCTIONS,
+        prompt_template: str = PROMPT_TEMPLATE,
     ):
         self.llm_client = llm_client
         self.retriever = retriever
+        self.instructions = instructions
+        self.prompt_template = prompt_template
+
+    def _build_context(self, search_results):
+        context = []
+        for doc in search_results:
+            context.append(f"<context>{doc}</context>")
+        return "\n".join(context)
+
+    def _build_prompt(self, query, context):
+        return self.prompt_template.format(question=query, context=context)
 
     def ask(self, query):
         search_results = self.retriever.retrieve(query, top_k=5)
-        context = "\n".join([doc["metadata"]["raw_text"] for doc in search_results])
-        prompt = PROMPT_TEMPLATE.format(question=query, context=context)
+        context = self._build_context(search_results)
+        prompt = self._build_prompt(query, context)
 
-        input_messages = [
-            {"role": "developer", "content": INSTRUCTIONS},
-            {"role": "user", "content": prompt},
-        ]
-
-        response = self.llm_client.responses.create(
-            model=self.llm_client.model_name, input=input_messages
+        response = self.llm_client.generate_response(
+            instructions=self.instructions,
+            prompt=prompt,
         )
 
-        return response.output_text
+        return response

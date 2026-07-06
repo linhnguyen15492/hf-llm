@@ -9,6 +9,12 @@ from typing import Dict, Any
 from chromadb import Documents, EmbeddingFunction, Embeddings
 from chromadb.utils.embedding_functions import register_embedding_function
 from sentence_transformers import SentenceTransformer
+from abc import ABC, abstractmethod
+
+
+class Embedding(ABC):
+    def __init__(self, model: str):
+        self.model_name = model
 
 
 class Embedder:
@@ -46,7 +52,9 @@ class Embedder:
 
 
 class APIEmbedder:
-    def __init__(self, api_url: str = None, api_key: str = None, model_name: str = None):
+    def __init__(
+        self, api_url: str = None, api_key: str = None, model_name: str = None
+    ):
         """
         Khởi tạo Embedder kết nối qua API.
         :param api_url: Đường dẫn Endpoint của API (Ví dụ: http://192.168.1.x:8000/v1/embeddings)
@@ -58,7 +66,9 @@ class APIEmbedder:
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
         self.client = OpenAI(api_key=self.api_key, base_url=self.api_url)
 
-    def encode(self, texts: Union[str, List[str]], batch_size: int = 32) -> List[List[float]]:
+    def encode(
+        self, texts: Union[str, List[str]], batch_size: int = 32
+    ) -> List[List[float]]:
         """
         Hàm mã hóa danh sách văn bản thành các Vector qua API.
         Thiết kế gom cụm (Batching) để tối ưu đường truyền mạng và giảm tải cho Server API.
@@ -67,19 +77,20 @@ class APIEmbedder:
 
         # Chia nhỏ danh sách chuỗi văn bản thành từng cụm (Batch) trước khi gửi qua mạng
         for i in range(0, len(texts), batch_size):
-            batch_texts = texts[i:i + batch_size]
+            batch_texts = texts[i : i + batch_size]
 
             try:
                 response = self.client.embeddings.create(
-                    input=batch_texts,
-                    model=self.model_name
+                    input=batch_texts, model=self.model_name
                 )
 
                 embeddings = [data.embedding for data in response.data]
                 all_embeddings.extend(embeddings)
 
             except Exception as e:
-                print(f"[API Embedder Network Error] Thất bại khi kết nối tới Server Embedding: {e}")
+                print(
+                    f"[API Embedder Network Error] Thất bại khi kết nối tới Server Embedding: {e}"
+                )
                 raise e
 
         return all_embeddings
@@ -107,4 +118,4 @@ class LocalEmbeddingFunction(EmbeddingFunction):
 
     @staticmethod
     def build_from_config(config: Dict[str, Any]) -> "EmbeddingFunction":
-        return LocalEmbeddingFunction(config['model'])
+        return LocalEmbeddingFunction(config["model"])

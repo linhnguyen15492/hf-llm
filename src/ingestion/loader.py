@@ -2,7 +2,7 @@ import requests
 import chromadb
 from tqdm import tqdm
 from config.settings import settings
-from embeddings.embedder import LocalEmbeddingFunction
+from embeddings.embedding import LocalEmbeddingFunction
 from models.document import FAQDocument
 
 

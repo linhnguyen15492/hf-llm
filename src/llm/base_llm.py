@@ -10,52 +10,19 @@ class BaseLLM(ABC):
         self.api_key = api_key
 
     @abstractmethod
-    def generate_response(self, prompt: str, max_tokens: int = 150) -> str:
+    def generate_response(self, instructions: str, prompt: str) -> str | None:
         pass
 
 
-def get_proxy_url():
-    """
-    Get the proxy URL from environment variable or fall back to Together.ai endpoint.
-    Uses TOGETHER_BASE_URL environment variable set in Dockerfile.
-    Defaults to https://api.together.xyz/ if not set.
-    """
-    if "IN_COURSERA_ENVIRON" in os.environ:
-        return "https://proxy.dlai.link/coursera_proxy/together"
-    return os.environ.get("TOGETHER_BASE_URL", "https://api.together.xyz/")
-
-
-def get_proxy_headers():
-    """
-    Get the appropriate headers for API calls based on the platform.
-    Returns Authorization header with Together API key if available.
-    """
-    return {"Authorization": os.environ.get("TOGETHER_API_KEY", "")}
-
-
-def get_together_key():
-    """
-    Get the Together API key from environment variables.
-    """
-    return os.environ.get("TOGETHER_API_KEY", "")
-
-
-def get_api_key(key_name: str):
-    """
-    Get the API key from environment variables.
-    """
-    return os.environ.get(key_name, "")
-
-
 def generate_with_single_input(
-        prompt: str,
-        role: str = "user",
-        top_p: float = None,
-        temperature: float = None,
-        max_tokens: int = 500,
-        model: str = "Qwen/Qwen3.5-9B",
-        together_api_key=None,
-        **kwargs,
+    prompt: str,
+    role: str = "user",
+    top_p: float = None,
+    temperature: float = None,
+    max_tokens: int = 500,
+    model: str = "Qwen/Qwen3.5-9B",
+    together_api_key=None,
+    **kwargs,
 ):
     # Remove None parameters for Together API - don't set to string 'none'
     if top_p is None:
@@ -112,13 +79,13 @@ def generate_with_single_input(
 
 
 def generate_with_multiple_input(
-        messages: List[Dict],
-        top_p: float = None,
-        temperature: float = None,
-        max_tokens: int = 500,
-        model: str = "Qwen/Qwen3.5-9B",
-        together_api_key=None,
-        **kwargs,
+    messages: List[Dict],
+    top_p: float = None,
+    temperature: float = None,
+    max_tokens: int = 500,
+    model: str = "Qwen/Qwen3.5-9B",
+    together_api_key=None,
+    **kwargs,
 ):
     # Remove None parameters for Together API
     if top_p is None:
