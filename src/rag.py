@@ -28,13 +28,13 @@ load_dotenv()
 
 class RAGBase:
     def __init__(
-            self,
-            index,
-            llm_client,
-            instructions=INSTRUCTIONS,
-            prompt_template=PROMPT_TEMPLATE,
-            course="llm-zoomcamp",
-            model="gpt-5.4-mini",
+        self,
+        index,
+        llm_client,
+        instructions=INSTRUCTIONS,
+        prompt_template=PROMPT_TEMPLATE,
+        course="llm-zoomcamp",
+        model="gpt-5.4-mini",
     ):
         self.index = index
         self.llm_client = llm_client
@@ -118,9 +118,9 @@ def main():
 
 class FAQRag:
     def __init__(
-            self,
-            llm_client: BaseLLM,
-            retriever: QdrantRetriever,
+        self,
+        llm_client: BaseLLM,
+        retriever: QdrantRetriever,
     ):
         self.llm_client = llm_client
         self.retriever = retriever

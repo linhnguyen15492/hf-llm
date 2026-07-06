@@ -7,12 +7,12 @@ from models.document import FAQDocument
 
 
 def load_faq_data() -> list[FAQDocument]:
-    docs_url = 'https://datatalks.club/faq/json/courses.json'
+    docs_url = "https://datatalks.club/faq/json/courses.json"
     response = requests.get(docs_url)
     courses_raw = response.json()
 
     documents = []
-    url_prefix = 'https://datatalks.club/faq'
+    url_prefix = "https://datatalks.club/faq"
 
     for course in courses_raw:
         course_url = f'{url_prefix}{course["path"]}'
@@ -40,11 +40,12 @@ def ingest_data():
         return
 
     print("Collection does not exist. Ingesting data...")
-    embedding_function = LocalEmbeddingFunction(model_name=settings.local_embedding_model,
-                                                cache_folder=settings.local_embedding_model_cache_dir)
+    embedding_function = LocalEmbeddingFunction(
+        model_name=settings.local_embedding_model,
+        cache_folder=settings.local_embedding_model_cache_dir,
+    )
     collection = client.create_collection(
-        name="faq_collection",
-        embedding_function=embedding_function
+        name="faq_collection", embedding_function=embedding_function
     )
 
     ids = []
@@ -54,19 +55,21 @@ def ingest_data():
     for document in tqdm(faq_documents, desc="Processing documents"):
         ids.append(str(document.id))
         texts.append(document.question + " " + document.answer)
-        metadatas.append({
-            "course": document.course,
-            "section": document.section,
-        })
+        metadatas.append(
+            {
+                "course": document.course,
+                "section": document.section,
+            }
+        )
         count += 1
     print("Retrieving embeddings...")
 
     batch_size = 64
     for i in tqdm(range(0, len(ids), batch_size), desc="Retrieving embeddings"):
         collection.add(
-            ids=ids[i:i + batch_size],
-            documents=texts[i:i + batch_size],
-            metadatas=metadatas[i:i + batch_size],
+            ids=ids[i : i + batch_size],
+            documents=texts[i : i + batch_size],
+            metadatas=metadatas[i : i + batch_size],
         )
 
     print(f"faq ingestion complete. Total documents ingested: {count}")
