@@ -1,11 +1,11 @@
 from embeddings.embedding import APIEmbedder
 import os
-
 from llm.base_llm import BaseLLM
 from retrieval.retriever import QdrantRetriever, Retriever
 from vectordb.vector_store import QdrantVectorStore
-
 from dotenv import load_dotenv
+
+load_dotenv()
 
 INSTRUCTIONS = """
 Your task is to answer questions from the course participants based on the provided context.
@@ -18,18 +18,16 @@ CONTEXT: {context}
 QUESTION: {question}
 """.strip()
 
-load_dotenv()
-
 
 class RAGBase:
     def __init__(
-        self,
-        index,
-        llm_client,
-        instructions=INSTRUCTIONS,
-        prompt_template=PROMPT_TEMPLATE,
-        course="llm-zoomcamp",
-        model="gpt-5.4-mini",
+            self,
+            index,
+            llm_client,
+            instructions=INSTRUCTIONS,
+            prompt_template=PROMPT_TEMPLATE,
+            course="llm-zoomcamp",
+            model="gpt-5.4-mini",
     ):
         self.index = index
         self.llm_client = llm_client
@@ -113,11 +111,11 @@ def main():
 
 class FAQRag:
     def __init__(
-        self,
-        llm_client: BaseLLM,
-        retriever: Retriever,
-        instructions: str = INSTRUCTIONS,
-        prompt_template: str = PROMPT_TEMPLATE,
+            self,
+            llm_client: BaseLLM,
+            retriever: Retriever,
+            instructions: str = INSTRUCTIONS,
+            prompt_template: str = PROMPT_TEMPLATE,
     ):
         self.llm_client = llm_client
         self.retriever = retriever
