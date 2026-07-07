@@ -2,6 +2,7 @@ from embeddings.embedding import APIEmbedder
 import os
 from llm.base_llm import BaseLLM
 from retrieval.retriever import QdrantRetriever, Retriever
+from src.prompts.prompt_builder import PromptBuilder
 from vectordb.vector_store import QdrantVectorStore
 from dotenv import load_dotenv
 
@@ -21,13 +22,13 @@ QUESTION: {question}
 
 class RAGBase:
     def __init__(
-            self,
-            index,
-            llm_client,
-            instructions=INSTRUCTIONS,
-            prompt_template=PROMPT_TEMPLATE,
-            course="llm-zoomcamp",
-            model="gpt-5.4-mini",
+        self,
+        index,
+        llm_client,
+        instructions=INSTRUCTIONS,
+        prompt_template=PROMPT_TEMPLATE,
+        course="llm-zoomcamp",
+        model="gpt-5.4-mini",
     ):
         self.index = index
         self.llm_client = llm_client
@@ -111,25 +112,20 @@ def main():
 
 class FAQRag:
     def __init__(
-            self,
-            llm_client: BaseLLM,
-            retriever: Retriever,
-            instructions: str = INSTRUCTIONS,
-            prompt_template: str = PROMPT_TEMPLATE,
+        self,
+        llm_client: BaseLLM,
+        retriever: Retriever,
+        prompt_builder: PromptBuilder,
     ):
         self.llm_client = llm_client
         self.retriever = retriever
-        self.instructions = instructions
-        self.prompt_template = prompt_template
+        self.prompt_builder = prompt_builder
 
     def _build_context(self, search_results):
-        context = []
-        for doc in search_results:
-            context.append(f"<context>{doc}</context>")
-        return "\n".join(context)
+        return self.prompt_builder.build_context(search_results)
 
     def _build_prompt(self, query, context):
-        return self.prompt_template.format(question=query, context=context)
+        return self.prompt_builder.build_prompt(query, context)
 
     def ask(self, query):
         search_results = self.retriever.retrieve(query, top_k=5)
@@ -137,7 +133,7 @@ class FAQRag:
         prompt = self._build_prompt(query, context)
 
         response = self.llm_client.generate_response(
-            instructions=self.instructions,
+            instructions=self.prompt_builder.INSTRUCTIONS,
             prompt=prompt,
         )
 

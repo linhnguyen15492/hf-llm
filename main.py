@@ -1,10 +1,10 @@
-from llm.gemini_llm import GeminiLLM
-from llm.openai_llm import OpenAILLM
-from rag import INSTRUCTIONS, PROMPT_TEMPLATE, FAQRag
-from embeddings.embedding import LocalEmbeddingFunction
-from retrieval.retriever import SimpleRetriever
+from src.llm.gemini_llm import GeminiLLM
+from src.llm.openai_llm import OpenAILLM
+from src.rag import INSTRUCTIONS, PROMPT_TEMPLATE, FAQRag
+from src.embeddings.embedding import LocalEmbeddingFunction
+from src.retrieval.retriever import SimpleRetriever
 from src.ingestion.loader import ingest_data
-from vectordb.vector_store import ChromaVectorStore
+from src.vectordb.vector_store import ChromaVectorStore
 from src.config.settings import settings
 
 
