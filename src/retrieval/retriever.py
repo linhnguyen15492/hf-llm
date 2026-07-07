@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from embeddings.embedding import APIEmbedder
 from qdrant_client import QdrantClient
 import bm25s
@@ -25,6 +27,21 @@ class SimpleRetriever(Retriever):
         results = self.vector_store.search(texts, top_k=top_k)
 
         return results
+
+
+class HybridRetriever(Retriever):
+    def __init__(self, vectordb: VectorStore, bm25: BM25Retriever):
+        super().__init__(vectordb)
+        self.bm25 = bm25
+
+    def retrieve(self, texts, top_k=5) -> list[Any] | None:
+        # Step 1: Retrieve using the vector store
+        vector_indices = self.vector_store.search(texts, top_k=top_k)
+
+        # Step 2: Retrieve using the embedder
+        bm25_indices = self.bm25.retrieve(texts, top_k=top_k)
+
+        return combined_results
 
 
 class QdrantRetriever:

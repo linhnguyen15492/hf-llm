@@ -1,3 +1,4 @@
+import json
 import requests
 import chromadb
 from tqdm import tqdm
@@ -6,7 +7,7 @@ from embeddings.embedding import LocalEmbeddingFunction
 from models.document import FAQDocument
 
 
-def load_faq_data() -> list[FAQDocument]:
+def load_faq_data(save_path: str) -> list[FAQDocument]:
     docs_url = "https://datatalks.club/faq/json/courses.json"
     response = requests.get(docs_url)
     courses_raw = response.json()
@@ -22,11 +23,14 @@ def load_faq_data() -> list[FAQDocument]:
 
         documents.extend(FAQDocument(**item) for item in course_data)
 
+    with open(save_path, "w", encoding="utf-8") as f:
+        json.dump([doc.dict() for doc in documents], f, ensure_ascii=False, indent=4)
+
     return documents
 
 
-def ingest_data():
-    faq_documents = load_faq_data()
+def ingest_data(save_path: str):
+    faq_documents = load_faq_data(save_path=save_path)
     client = chromadb.PersistentClient(path=settings.chromadb_dir)
 
     try:
