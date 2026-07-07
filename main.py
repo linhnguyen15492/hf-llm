@@ -6,6 +6,7 @@ from retrieval.retriever import SimpleRetriever
 from ingestion.loader import ingest_data
 from vectordb.vector_store import ChromaVectorStore
 from config.settings import settings
+import gradio as gr
 
 
 def main():
@@ -51,6 +52,17 @@ def main():
         print(f"Question: {question}")
         print(f"Answer: {answer}")
         print("-" * 50)
+
+    # Set up Gradio interface
+    iface = gr.Interface(
+        fn=rag.ask,
+        inputs="text",
+        outputs="text",
+        title="RAG Application",
+        description="Ask a question, and the app will retrieve relevant information and provide an answer.",
+    )
+
+    iface.launch()
 
 
 if __name__ == "__main__":
