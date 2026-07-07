@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from textwrap import dedent
 
 
 class PromptBuilder(ABC):
@@ -16,25 +17,28 @@ class PromptBuilder(ABC):
 
 
 class FAQPromptBuilder(PromptBuilder):
-    INSTRUCTIONS = """
+    INSTRUCTIONS = dedent("""\
         Your task is to answer questions from the course participants based on the provided context.
 
         Use the context to find relevant information and provide accurate answers. If the answer is not found in the context, respond with "I don't know."
-    """
+    """)
 
-    PROMPT_TEMPLATE = """
-        Question:
+    PROMPT_TEMPLATE = dedent("""\
+        Question: 
         {question}
 
-        Context:
+        Context: 
         {context}
-    """
+    """)
 
     def build_context(self, search_results):
-        context = []
+        lines = []
         for doc in search_results:
-            context.append(f"<context>{doc}</context>")
-        return "\n".join(context)
+            lines.append(doc["section"])
+            lines.append("Q: " + doc["question"])
+            lines.append("A: " + doc["answer"])
+            lines.append("")
+        return "\n".join(lines).strip()
 
     def build_prompt(self, question, search_results):
         context = self.build_context(search_results)

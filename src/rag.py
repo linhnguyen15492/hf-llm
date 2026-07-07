@@ -1,6 +1,7 @@
 from embeddings.embedding import APIEmbedder
 import os
 from llm.base_llm import BaseLLM
+from prompt_toolkit import prompt
 from retrieval.retriever import QdrantRetriever, Retriever
 from src.prompts.prompt_builder import PromptBuilder
 from vectordb.vector_store import QdrantVectorStore
@@ -121,16 +122,9 @@ class FAQRag:
         self.retriever = retriever
         self.prompt_builder = prompt_builder
 
-    def _build_context(self, search_results):
-        return self.prompt_builder.build_context(search_results)
-
-    def _build_prompt(self, query, context):
-        return self.prompt_builder.build_prompt(query, context)
-
     def ask(self, query):
         search_results = self.retriever.retrieve(query, top_k=5)
-        context = self._build_context(search_results)
-        prompt = self._build_prompt(query, context)
+        prompt = self.prompt_builder.build_prompt(query, search_results)
 
         response = self.llm_client.generate_response(
             instructions=self.prompt_builder.INSTRUCTIONS,

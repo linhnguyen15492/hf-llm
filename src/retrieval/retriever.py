@@ -51,19 +51,26 @@ class HybridRetriever(Retriever):
         # Step 3: Combine the results using RRF
         ids = self._rrf(vector_list, bm25_list, top_k=top_k)
 
-        return [doc["text"] for doc in self.corpus if doc["id"] in ids]
+        return [doc for doc in self.corpus if doc["id"] in ids]
 
     def _build_corpus(self):
         with open(self.corpus_path, "r", encoding="utf-8") as f:
             docs = json.load(f)
             corpus = [
-                {"id": doc["id"], "text": f"{doc['question']} {doc['answer']}"}
+                {
+                    "id": doc["id"],
+                    "section": doc["section"],
+                    "question": doc["question"],
+                    "answer": doc["answer"],
+                }
                 for doc in docs
             ]
 
         self.corpus = corpus
         self.bm25_retriever = bm25s.BM25(corpus=corpus)
-        tokenized_data = bm25s.tokenize([doc["text"] for doc in corpus])
+        tokenized_data = bm25s.tokenize(
+            [f"{doc["question"]} {doc["answer"]}" for doc in corpus]
+        )
         self.bm25_retriever.index(tokenized_data)
 
     def _rrf(self, vector_list, bm25_list, top_k=5, K=60):

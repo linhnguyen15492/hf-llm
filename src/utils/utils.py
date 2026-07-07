@@ -30,7 +30,7 @@ def reciprocal_rank_fusion(list1, list2, top_k=5, K=60):
     for lst in [list1, list2]:
         # Calculate the RRF score for each document index
         for rank, item in enumerate(
-                lst, start=1
+            lst, start=1
         ):  # Start = 1 set the first element as 1 and not 0.
             # This is a convention on how ranks work (the first element in ranking is denoted by 1 and not 0 as in lists)
             # If the item is not in the dictionary, initialize its score to 0

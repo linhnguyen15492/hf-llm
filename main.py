@@ -47,27 +47,27 @@ def main():
         prompt_builder=prompt_builder,
     )
 
-    # questions = [
-    #     "I just discovered the course. Can I join now?",
-    #     "How do I get a certificate?",
-    # ]
+    questions = [
+        "I just discovered the course. Can I join now?",
+        "How do I get a certificate?",
+    ]
 
-    # for question in questions:
-    #     answer = rag.ask(question)
-    #     print(f"Question: {question}")
-    #     print(f"Answer: {answer}")
-    #     print("-" * 50)
+    for question in questions:
+        answer = rag.ask(question)
+        print(f"Question: {question}")
+        print(f"Answer: {answer}")
+        print("-" * 50)
 
     # Set up Gradio interface
-    iface = gr.Interface(
-        fn=rag.ask,
-        inputs="text",
-        outputs="text",
-        title="RAG Application",
-        description="Ask a question, and the app will retrieve relevant information and provide an answer.",
-    )
+    # iface = gr.Interface(
+    #     fn=rag.ask,
+    #     inputs="text",
+    #     outputs="text",
+    #     title="RAG Application",
+    #     description="Ask a question, and the app will retrieve relevant information and provide an answer.",
+    # )
 
-    iface.launch()
+    # iface.launch()
 
 
 if __name__ == "__main__":
