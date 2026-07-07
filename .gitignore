@@ -219,8 +219,6 @@ __marimo__/
 
 .idea/
 
-models/
+.models/
 data/
-
-qdrant_storage/
-chroma_db/
+storage/

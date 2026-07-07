@@ -10,6 +10,7 @@ from chromadb import Documents, EmbeddingFunction, Embeddings
 from chromadb.utils.embedding_functions import register_embedding_function
 from sentence_transformers import SentenceTransformer
 from abc import ABC, abstractmethod
+from functools import lru_cache
 
 
 class Embedding(ABC):
@@ -99,11 +100,8 @@ class APIEmbedder:
 @register_embedding_function
 class LocalEmbeddingFunction(EmbeddingFunction):
 
-    def __init__(self, model_name, model_path=None, *args: Any, **kwargs: Any):
-        if model_path:
-            self.model = SentenceTransformer(model_path)
-        else:
-            self.model = SentenceTransformer(model_name, cache_folder=model_path)
+    def __init__(self, model_name: str, cache_folder: str | None = None):
+        self.model = SentenceTransformer(model_name, cache_folder=cache_folder)
 
     def __call__(self, input: Documents) -> Embeddings:
         # embed the documents somehow
@@ -119,3 +117,17 @@ class LocalEmbeddingFunction(EmbeddingFunction):
     @staticmethod
     def build_from_config(config: Dict[str, Any]) -> "EmbeddingFunction":
         return LocalEmbeddingFunction(config["model"])
+
+
+@lru_cache(maxsize=None)
+def get_local_embedding_function(
+    model_name: str, cache_folder: str | None = None
+) -> LocalEmbeddingFunction:
+    """
+    Sử dụng theo singleton pattern để lấy đối tượng EmbeddingFunction dựa trên tên mô hình và đường dẫn mô hình.
+    Lấy đối tượng EmbeddingFunction dựa trên tên mô hình và đường dẫn mô hình.
+    :param model_name: Tên mô hình embedding (ví dụ: "all-MiniLM-L6-v2")
+    :param cache_folder: Đường dẫn tới thư mục chứa mô hình (nếu có)
+    :return: Đối tượng EmbeddingFunction
+    """
+    return LocalEmbeddingFunction(model_name=model_name, cache_folder=cache_folder)

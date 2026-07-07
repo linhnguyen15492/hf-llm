@@ -3,8 +3,9 @@ import requests
 import chromadb
 from tqdm import tqdm
 from config.settings import settings
-from embeddings.embedding import LocalEmbeddingFunction
+from embeddings.embedding import get_local_embedding_function
 from models.document import FAQDocument
+from dataclasses import asdict
 
 
 def load_faq_data(save_path: str) -> list[FAQDocument]:
@@ -24,7 +25,7 @@ def load_faq_data(save_path: str) -> list[FAQDocument]:
         documents.extend(FAQDocument(**item) for item in course_data)
 
     with open(save_path, "w", encoding="utf-8") as f:
-        json.dump([doc.dict() for doc in documents], f, ensure_ascii=False, indent=4)
+        json.dump([asdict(doc) for doc in documents], f, ensure_ascii=False, indent=4)
 
     return documents
 
@@ -44,10 +45,11 @@ def ingest_data(save_path: str):
         return
 
     print("Collection does not exist. Ingesting data...")
-    embedding_function = LocalEmbeddingFunction(
+    embedding_function = get_local_embedding_function(
         model_name=settings.local_embedding_model,
         cache_folder=settings.local_embedding_model_cache_dir,
     )
+
     collection = client.create_collection(
         name="faq_collection", embedding_function=embedding_function
     )

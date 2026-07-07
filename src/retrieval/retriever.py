@@ -8,6 +8,8 @@ from utils.utils import cosine_similarity
 from abc import ABC, abstractmethod
 from typing import Any, List
 from vectordb.vector_store import VectorStore
+from pathlib import Path
+import json
 
 
 class Retriever(ABC):
@@ -30,18 +32,55 @@ class SimpleRetriever(Retriever):
 
 
 class HybridRetriever(Retriever):
-    def __init__(self, vectordb: VectorStore, bm25: BM25Retriever):
+    def __init__(self, vectordb: VectorStore, corpus_path: str):
         super().__init__(vectordb)
-        self.bm25 = bm25
+        self.corpus_path = corpus_path
+        self._build_corpus()
 
     def retrieve(self, texts, top_k=5) -> list[Any] | None:
         # Step 1: Retrieve using the vector store
-        vector_indices = self.vector_store.search(texts, top_k=top_k)
+        vector_list = self.vector_store.search(texts, top_k=top_k)
 
-        # Step 2: Retrieve using the embedder
-        bm25_indices = self.bm25.retrieve(texts, top_k=top_k)
+        # Step 2: Retrieve using the BM25 retriever
+        tokenized_query = bm25s.tokenize(texts)
+        bm25_list, scores = self.bm25_retriever.retrieve(tokenized_query, k=top_k)
 
-        return combined_results
+        # Extract the first element to get the list of retrieved documents
+        bm25_list = bm25_list[0]
+
+        # Step 3: Combine the results using RRF
+        ids = self._rrf(vector_list, bm25_list, top_k=top_k)
+
+        return [doc["text"] for doc in self.corpus if doc["id"] in ids]
+
+    def _build_corpus(self):
+        with open(self.corpus_path, "r", encoding="utf-8") as f:
+            docs = json.load(f)
+            corpus = [
+                {"id": doc["id"], "text": f"{doc['question']} {doc['answer']}"}
+                for doc in docs
+            ]
+
+        self.corpus = corpus
+        self.bm25_retriever = bm25s.BM25(corpus=corpus)
+        tokenized_data = bm25s.tokenize([doc["text"] for doc in corpus])
+        self.bm25_retriever.index(tokenized_data)
+
+    def _rrf(self, vector_list, bm25_list, top_k=5, K=60):
+        # Implement Reciprocal Rank Fusion (RRF) to combine results
+        rrf_scores = {}
+
+        for lst in [vector_list, bm25_list]:
+            for rank, item in enumerate(lst, start=1):
+                if item["id"] not in rrf_scores:
+                    rrf_scores[item["id"]] = 0
+
+                rrf_scores[item["id"]] += 1 / (K + rank)
+
+        # Sort by combined score and return top_k results
+        sorted_results = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
+
+        return [item[0] for item in sorted_results[:top_k]]
 
 
 class QdrantRetriever:

@@ -31,15 +31,10 @@ class FAQPromptBuilder(PromptBuilder):
     """
 
     def build_context(self, search_results):
-        lines = []
-
+        context = []
         for doc in search_results:
-            lines.append(doc["section"])
-            lines.append("Q: " + doc["question"])
-            lines.append("A: " + doc["answer"])
-            lines.append("")
-
-        return "\n".join(lines).strip()
+            context.append(f"<context>{doc}</context>")
+        return "\n".join(context)
 
     def build_prompt(self, question, search_results):
         context = self.build_context(search_results)

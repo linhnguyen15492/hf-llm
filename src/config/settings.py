@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     # Embedding
     embedding_provider: str = "sentence_transformer"
     local_embedding_model: str = "BAAI/bge-base-en-v1.5"
-    local_embedding_model_cache_dir: str = "models/"
+    local_embedding_model_cache_dir: str = ".models"
 
     # Reranker
     reranker_provider: str = "bge"
@@ -35,7 +35,9 @@ class Settings(BaseSettings):
     # Storage
     data_dir: str = "data"
 
-    chromadb_dir: str = None
+    chromadb_dir: str = "storage/chroma_db/"
+
+    faq_corpus_dir: str = "storage/faq_corpus.json"
 
 
 @lru_cache

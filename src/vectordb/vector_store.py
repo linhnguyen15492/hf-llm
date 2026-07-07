@@ -170,15 +170,22 @@ class ChromaVectorStore(VectorStore):
         :return: Danh sách các điểm gần nhất.
         """
 
-        results = self.collection.query(query_texts=texts, n_results=top_k).get(
-            "documents"
-        )
+        results = self.collection.query(query_texts=texts, n_results=top_k)
 
-        if not results:
+        ids = results.get("ids", [])[0]
+        documents = results.get(
+            "documents", []
+        )  # Lấy danh sách documents từ kết quả trả về
+        if not documents or not ids:
             return None
 
-        documents = []
-        for result in results:
-            [documents.append(r) for r in result]
+        flat_documents = [doc for docs in (documents or []) for doc in docs]
+        assert len(ids) == len(
+            flat_documents
+        ), f"Expected {len(ids)} documents, got {len(flat_documents)}"
 
-        return documents
+        search_results = []
+        for i, doc in zip(ids, flat_documents):
+            search_results.append({"id": i, "text": doc})
+
+        return search_results

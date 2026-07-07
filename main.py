@@ -1,18 +1,20 @@
 from llm.gemini_llm import GeminiLLM
 from llm.openai_llm import OpenAILLM
-from rag import INSTRUCTIONS, PROMPT_TEMPLATE, FAQRag
-from embeddings.embedding import LocalEmbeddingFunction
-from retrieval.retriever import SimpleRetriever
+from rag import FAQRag
+from embeddings.embedding import LocalEmbeddingFunction, get_local_embedding_function
+from retrieval.retriever import HybridRetriever, SimpleRetriever
 from ingestion.loader import ingest_data
 from vectordb.vector_store import ChromaVectorStore
+from prompts.prompt_builder import FAQPromptBuilder
 from config.settings import settings
 import gradio as gr
 
 
 def main():
-    # ingest_data()
 
-    embedding_function = LocalEmbeddingFunction(
+    ingest_data(settings.faq_corpus_dir)
+
+    embedding_function = get_local_embedding_function(
         model_name=settings.local_embedding_model,
         cache_folder=settings.local_embedding_model_cache_dir,
     )
@@ -23,7 +25,9 @@ def main():
         embedder=embedding_function,
     )
 
-    retriever = SimpleRetriever(vector_store)
+    retriever = HybridRetriever(
+        vectordb=vector_store, corpus_path=settings.faq_corpus_dir
+    )
 
     openai_llm = OpenAILLM(
         model=settings.openai_llm_model,
@@ -35,23 +39,24 @@ def main():
         api_key=settings.gemini_api_key,
     )
 
-    questions = [
-        "I just discovered the course. Can I join now?",
-        "How do I get a certificate?",
-    ]
+    prompt_builder = FAQPromptBuilder()
 
     rag = FAQRag(
         llm_client=gemini_llm,
         retriever=retriever,
-        instructions=INSTRUCTIONS,
-        prompt_template=PROMPT_TEMPLATE,
+        prompt_builder=prompt_builder,
     )
 
-    for question in questions:
-        answer = rag.ask(question)
-        print(f"Question: {question}")
-        print(f"Answer: {answer}")
-        print("-" * 50)
+    # questions = [
+    #     "I just discovered the course. Can I join now?",
+    #     "How do I get a certificate?",
+    # ]
+
+    # for question in questions:
+    #     answer = rag.ask(question)
+    #     print(f"Question: {question}")
+    #     print(f"Answer: {answer}")
+    #     print("-" * 50)
 
     # Set up Gradio interface
     iface = gr.Interface(
