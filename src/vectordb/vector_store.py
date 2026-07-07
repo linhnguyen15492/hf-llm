@@ -153,13 +153,13 @@ class ChromaVectorStore(VectorStore):
 
         try:
             self.collection = self.client.get_collection(
-                name=collection_name,
-                embedding_function=embedder,
+                name=collection_name, embedding_function=embedder
             )
         except Exception:
             self.collection = self.client.create_collection(
                 name=collection_name,
                 embedding_function=embedder,
+                configuration={"hnsw": {"space": "cosine", "ef_construction": 200}},
             )
 
     def search(self, texts, top_k=5) -> list[Any] | None:
