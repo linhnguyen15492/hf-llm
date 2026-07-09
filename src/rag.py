@@ -3,7 +3,7 @@ import os
 from llm.base_llm import BaseLLM
 from prompt_toolkit import prompt
 from retrieval.retriever import QdrantRetriever, Retriever
-from src.prompts.prompt_builder import PromptBuilder
+from prompts.prompt_builder import PromptBuilder
 from vectordb.vector_store import QdrantVectorStore
 from dotenv import load_dotenv
 

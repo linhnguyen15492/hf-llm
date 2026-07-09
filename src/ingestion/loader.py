@@ -1,4 +1,6 @@
 import json
+import os
+from pathlib import Path
 import requests
 import chromadb
 from tqdm import tqdm
@@ -9,6 +11,12 @@ from dataclasses import asdict
 
 
 def load_faq_data(save_path: str) -> list[FAQDocument]:
+    path = Path(save_path)
+    if path.exists():
+        with open(save_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return [FAQDocument(**item) for item in data]
+
     docs_url = "https://datatalks.club/faq/json/courses.json"
     response = requests.get(docs_url)
     courses_raw = response.json()
