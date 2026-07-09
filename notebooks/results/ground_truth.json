@@ -1,0 +1,62 @@
+[
+    {
+        "question": "What is the main goal of this module in building a Retrieval-Augmented Generation system?",
+        "document": "01-agentic-rag/lessons/01-intro.md"
+    },
+    {
+        "question": "How do LLMs generate text based on user prompts in this course?",
+        "document": "01-agentic-rag/lessons/01-intro.md"
+    },
+    {
+        "question": "What limitations of LLMs should we be aware of when using them in projects?",
+        "document": "01-agentic-rag/lessons/01-intro.md"
+    },
+    {
+        "question": "Can you explain how RAG helps overcome the knowledge limitations of LLMs?",
+        "document": "01-agentic-rag/lessons/01-intro.md"
+    },
+    {
+        "question": "What will we cover in the first part of the course regarding RAG systems?",
+        "document": "01-agentic-rag/lessons/01-intro.md"
+    },
+    {
+        "question": "What are the basic requirements needed to start this module in Python?",
+        "document": "01-agentic-rag/lessons/02-environment.md"
+    },
+    {
+        "question": "How can I create a new project folder for our code?",
+        "document": "01-agentic-rag/lessons/02-environment.md"
+    },
+    {
+        "question": "What command do I need to run to install the necessary dependencies?",
+        "document": "01-agentic-rag/lessons/02-environment.md"
+    },
+    {
+        "question": "How should I securely store my API key within the project?",
+        "document": "01-agentic-rag/lessons/02-environment.md"
+    },
+    {
+        "question": "What should I do if I encounter an error when checking if the OpenAI client works?",
+        "document": "01-agentic-rag/lessons/02-environment.md"
+    },
+    {
+        "question": "What does RAG stand for and what are its two main components?",
+        "document": "01-agentic-rag/lessons/03-rag.md"
+    },
+    {
+        "question": "Why can't we just send questions directly to an LLM without additional context?",
+        "document": "01-agentic-rag/lessons/03-rag.md"
+    },
+    {
+        "question": "How does including context improve the answers given by the LLM?",
+        "document": "01-agentic-rag/lessons/03-rag.md"
+    },
+    {
+        "question": "Can you explain the overall architecture of the RAG system?",
+        "document": "01-agentic-rag/lessons/03-rag.md"
+    },
+    {
+        "question": "What happens if the wrong document is retrieved during the search process?",
+        "document": "01-agentic-rag/lessons/03-rag.md"
+    }
+]

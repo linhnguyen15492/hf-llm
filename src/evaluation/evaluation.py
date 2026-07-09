@@ -16,10 +16,7 @@ import pandas as pd
 OutputType = TypeVar("OutputType", bound=BaseModel)
 
 
-def calc_price(usage):
-    input_price_per_million = 0.75
-    output_price_per_million = 4.50
-
+def calc_price(usage, input_price_per_million=0.75, output_price_per_million=4.50):
     input_cost = (usage.input_tokens / 1_000_000) * input_price_per_million
     output_cost = (usage.output_tokens / 1_000_000) * output_price_per_million
     total_cost = input_cost + output_cost
@@ -31,11 +28,13 @@ def calc_price(usage):
     }
 
 
-def calc_total_price(usages):
+def calc_total_price(
+    usages, input_price_per_million=0.75, output_price_per_million=4.50
+):
     total_cost = 0.0
 
     for usage in usages:
-        cost = calc_price(usage)
+        cost = calc_price(usage, input_price_per_million, output_price_per_million)
         total_cost = total_cost + cost["total_cost"]
 
     return total_cost
@@ -46,7 +45,7 @@ def llm_structured(
     instructions,
     user_prompt,
     output_type: type[OutputType],
-    model="gpt-5.4-mini",
+    model,
 ) -> tuple[OutputType, Any]:
     messages = [
         {"role": "developer", "content": instructions},
@@ -71,7 +70,7 @@ def llm_structured_retry(
     instructions,
     user_prompt,
     output_type: type[OutputType],
-    model="gpt-5.4-mini",
+    model,
     max_retries=3,
 ) -> tuple[OutputType, Any]:
     for attempt in range(max_retries):
@@ -95,9 +94,8 @@ def generate_ground_truth(
     doc,
     llm_client,
     data_gen_instructions,
-    user_prompt,
     output_type: type[Questions],
-    model="gpt-5.4-mini",
+    model,
 ):
     user_prompt = json.dumps(doc)
 
@@ -106,7 +104,7 @@ def generate_ground_truth(
             llm_client, data_gen_instructions, user_prompt, output_type, model=model
         )
     except Exception as e:
-        print(f"Error generating ground truth for document {doc['id']}: {e}")
+        print(f"Error generating ground truth for document {doc['filename']}: {e}")
         return [], None
 
     if out is None or not hasattr(out, "questions") or out.questions is None:
@@ -115,7 +113,7 @@ def generate_ground_truth(
     results = []
 
     for q in out.questions:
-        results.append({"question": q, "document": doc["id"]})
+        results.append({"question": q, "document": doc["filename"]})
 
     return results, usage
 
