@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 import requests
 import chromadb
@@ -87,3 +86,71 @@ def ingest_data(save_path: str):
         )
 
     print(f"faq ingestion complete. Total documents ingested: {count}")
+
+
+def get_book_text_objects():
+    # Source location
+    text_objs = list()
+    api_base_url = (
+        "https://api.github.com/repos/progit/progit2/contents/book"  # Book base URL
+    )
+    chapter_urls = [
+        "/01-introduction/sections",
+        "/02-git-basics/sections",
+    ]  # List of section URLs
+
+    # Loop through book chapters
+    for chapter_url in chapter_urls:
+        response = requests.get(
+            api_base_url + chapter_url
+        )  # Get the JSON data for the section files in the chapter
+
+        # Loop through inner files (sections)
+        for file_info in response.json():
+            if file_info["type"] == "file":  # Only process files (not directories)
+                file_response = requests.get(file_info["download_url"])
+
+                # Build objects including metadata
+                chapter_title = file_info["download_url"].split("/")[-3]
+                filename = file_info["download_url"].split("/")[-1]
+                text_obj = {
+                    "body": file_response.text,
+                    "chapter_title": chapter_title,
+                    "filename": filename,
+                }
+                text_objs.append(text_obj)
+    return text_objs
+
+
+def build_chunk_objs(book_text_obj, chunks):
+    """
+    Constructs a list of chunk objects from a given book text object
+    and its associated chunks.
+
+    Args:
+        book_text_obj (dict): A dictionary containing metadata for the book text,
+                              including 'chapter_title' and 'filename'.
+        chunks (list): A list of chunks that represent parts of the book text.
+
+    Returns:
+        list: A list of dictionaries, each representing a chunk object
+              with 'chapter_title', 'filename', 'chunk', and 'chunk_index'.
+    """
+    chunk_objs = list()  # Initialize an empty list to store chunk objects
+
+    # Iterate over the chunks with an index
+    for i, c in enumerate(chunks):
+        # Create a dictionary for each chunk with its associated data
+        chunk_obj = {
+            "chapter_title": book_text_obj[
+                "chapter_title"
+            ],  # Chapter title from the book text object
+            "filename": book_text_obj["filename"],  # Filename from the book text object
+            "chunk": c,  # The actual chunk of text
+            "chunk_index": i,  # The index of the chunk in the list
+        }
+        # Append the constructed chunk object to the list
+        chunk_objs.append(chunk_obj)
+
+    # Return the list of chunk objects
+    return chunk_objs
