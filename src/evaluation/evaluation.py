@@ -184,7 +184,8 @@ def map_progress(pool, seq, f):
 
 
 def main():
-    data_gen_instructions = dedent("""\
+    data_gen_instructions = dedent(
+        """\
     You emulate a student who's taking our course.
     Formulate 5 questions this student might ask based on a FAQ record. The record
     should contain the answer to the questions, and the questions should be complete and not too short.
@@ -192,7 +193,8 @@ def main():
 
     The output should resemble how people ask questions
     on the internet. Not too formal, not too short, not too long.
-    """).strip()
+    """
+    ).strip()
 
     documents = load_faq_data(settings.faq_corpus_dir)
     documents_llm = []
